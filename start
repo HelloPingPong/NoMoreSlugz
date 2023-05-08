@@ -1,0 +1,88 @@
+import pygame
+from sys import exit
+
+pygame.init()
+screen = pygame.display.set_mode((700, 450))
+pygame.display.set_caption('OH NO THE SLUGS R BACK')
+Clock = pygame.time.Clock()
+test_font = pygame.font.Font('font/Apocalypse-Grunge.ttf', 50)
+game_active = True
+bg_music = pygame.mixer.Sound('audio/oni.wav')
+bg_music.play(loops = -1)
+# Font is a class, so you need to instantiate it
+# Font takes two arguments: font file and font size
+# You can also use pygame.font.SysFont() to use system fonts
+
+sky_surface = pygame.image.load('graphics/slugsky.png').convert_alpha()
+ground_surface = pygame.image.load('graphics/lonelyroad.png').convert_alpha()
+text_surface = test_font.render('No more slugs!', False, (255, 0, 0))
+game_over_text_surface = test_font.render('Fight more slugs? Press enter.', False, (255, 0, 0))
+# False is for anti-aliasing
+# (255, 0, 0) is for RGB color
+
+saddle_slug_surf = pygame.image.load('graphics/greensaddleupscaled.png').convert_alpha()
+saddle_slug_rect = saddle_slug_surf.get_rect(midbottom = (580, 350))
+
+
+player_surface = pygame.image.load('graphics/player.png').convert_alpha()
+player_rect = player_surface.get_rect(midbottom = (80, 345))
+player_gravity = 0
+# middle of road is at 345 pixels on Y axis and 80 pixels on X axis
+
+while True: 
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            exit()
+        if event.type == pygame.KEYDOWN: 
+            if event.key == pygame.K_SPACE: #and player_rect.bottom >= 345
+                player_gravity = -20
+                print('jump')
+            if event.key == pygame.K_ESCAPE:
+                pygame.quit()
+                exit()
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_SPACE:
+                print('stop jumping')
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if player_rect.collidepoint(event.pos):
+                player_gravity = -20
+
+    if game_active:
+        screen.blit(sky_surface,(0,0))
+        screen.blit(ground_surface,(0,0))
+        screen.blit(text_surface,(50,375))
+        
+        saddle_slug_rect.x -=4.5
+        if saddle_slug_rect.right <= 0: saddle_slug_rect.left = 700
+        screen.blit(saddle_slug_surf, saddle_slug_rect)
+        # To move something, you don't move the surface, you move the rectangle
+        
+        #player
+        player_gravity +=1
+        player_rect.y += player_gravity
+        if player_rect.bottom >= 345: player_rect.bottom = 345
+        if player_rect.top <= 0: player_gravity = 50
+        
+        screen.blit(player_surface, player_rect)
+
+        #collision
+        if saddle_slug_rect.colliderect(player_rect):
+            game_active = False
+
+        if player_rect.colliderect(saddle_slug_rect):
+            print('collision!')
+        # Collision detection is done by checking if two rectangles overlap
+
+    else:
+        screen.fill((0,0,0))
+        screen.blit(game_over_text_surface, (50, 375))
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RETURN:
+                game_active = True
+                saddle_slug_rect.left = 700
+
+
+
+    pygame.display.update()
+    Clock.tick(60)
